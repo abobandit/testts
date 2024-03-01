@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>coffee</title>
+    <style>
+        .flex {
+            display: flex;
+        }
+
+        .align {
+            flex-direction: column;
+        }
+
+        dialog div > * {
+            width: max-content;
+        }
+
+        dialog div > div > * {
+            display: grid;
+            grid-template-columns:1fr 1fr;
+            width: fit-content;
+            margin-bottom: 1rem;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .reserves {
+            font-size: 1.2rem;
+            text-transform: uppercase;
+        }
+
+        .p {
+            padding: .5rem 1rem;
+        }
+
+        .justify {
+            justify-content: space-between;
+        }
+
+        .size {
+            width: 10rem;
+            height: fit-content;
+        }
+
+        dialog div span {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <h1 class="title">Coffee Break</h1>
+    <div class="reserves flex align bold">
+    </div>
+    <div>
+        <input value="Service" class="openModal" type="button">
+        <input value="Buy drink" class="openMenu" type="button">
+    </div>
+    <dialog class="orderDrink">
+        <input class="closeModal" value="&#9746;" type="button">
+    </dialog>
+    <dialog class="service">
+        <div class="flex align">
+            <input class="closeModal" value="&#9746;" type="button">
+            <h3>Service</h3>
+            <div class="flex align">
+                <label>Coffee
+                    <input value="0">
+                </label>
+                <label>Milk
+                    <input value="0">
+                </label>
+                <label>Sugar
+                    <input value="0">
+                </label>
+                <label>Cups
+                    <input value="0">
+                </label>
+                <label>
+                    Password
+                    <input class="password">
+                </label>
+                <input class="takeMoney" disabled type="button" value="Take money">
+            </div>
+        </div>
+    </dialog>
+</div>
+<script defer>
+    const status = {
+        invalidValue: 'Неверный формат введенных данных',
+        invalidIngredient: 'Неверное название ингредиента',
+        notEnough: 'Недостаточно ингредиентов'
+    }
+    const password = "123"
+
+    class CoffeeMachine {
+        constructor(money, sugar, milk, coffee, cup) {
+            this.money = money
+            this.ingredients = {
+                sugar: sugar,
+                cup: cup,
+                milk: milk,
+                coffee: coffee,
+            }
+        }
+        isDrinkAvailable(drink) {
+            return !(this.ingredients.milk < drink.milk
+                && this.ingredients.cup < drink.cup
+                && this.ingredients.coffee < drink.coffee
+                && this.ingredients.sugar < drink.sugar);
+        }
+
+        buyDrink(drink){
+            if (this.isDrinkAvailable()){
+                this.money +=drink.price
+                for(let i in this.ingredients){
+                    this.ingredients[i] -= drink.ingredients[i]
+                }
+            }else return status.notEnough
+        }
+    }
+    class Drink{
+
+        constructor( milk, coffee, price,name, sugar) {
+            this.ingredients = {
+                coffee: coffee,
+                sugar: sugar,
+                cup:1
+            }
+            this.name = name
+            this.price = price
+        }
+
+    }
+
+    class DialogElement {
+        constructor(tag, className, attribute = null, innerText = null) {
+            this.tag = tag
+            this.className = className
+            this.attribute = attribute
+            this.innerText = innerText
+        }
+
+        createElem(attribute = null) {
+            const elem = document.createElement(this.tag)
+            elem.innerText = this.innerText
+            elem.className = this.className
+            elem[attribute] = this.attribute
+            return elem
+        }
+    }
+
+    //HTML elements
+    const openModalBtn = document.querySelector(".openModal")
+    const openMenuBtn = document.querySelector(".openMenu")
+    const serviceDialog = document.querySelector('.service')
+    const closeModalBtn = serviceDialog.querySelector(".closeModal")
+    const orderDrinkDialog = document.querySelector('.orderDrink')
+    const closeMenuBtn = orderDrinkDialog.querySelector(".closeModal")
+    const passwordInput = document.querySelector('.password')
+    const takeMoneyBtn = document.querySelector('.takeMoney')
+    const reserves = document.querySelector('.reserves')
+    const elems = reserves.children
+    //
+
+    // Coffee bar
+    const coffeeMachine = new CoffeeMachine(0, 100, 100, 100, 10)
+    const espresso = new Drink(10, 10, 40, 'espresso',20)
+    const latte = new Drink( 10, 10, 30,'latte',30)
+    const cappuccino = new Drink( 15, 20, 20,'cappuccino',25)
+    const drinks = [espresso, latte, cappuccino]
+    //
+
+    for (let i in coffeeMachine.ingredients) {
+        const span = document.createElement('span')
+        span.classList.add(i)
+        span.innerText = i + ' : ' + coffeeMachine.ingredients[i]
+        reserves.insertAdjacentElement('beforeend', span)
+    }
+
+    const wrapperCreated = new DialogElement('div', 'flex align p size').createElem()
+    for (let drink of drinks) {
+        const elem = new DialogElement('span', 'elem', '', drink.name,)
+        const orderBtn = new DialogElement('input', 'order', 'type', 'order')
+        const buttonCreated = orderBtn.createElem()
+        const elemCreated = elem.createElem()
+        buttonCreated.value = 'order'
+        buttonCreated.type = 'button'
+        elemCreated.insertAdjacentElement('beforeend', buttonCreated)
+        wrapperCreated.insertAdjacentHTML('beforeend', elemCreated.outerHTML)
+    }
+    orderDrinkDialog.insertAdjacentHTML('beforeend', wrapperCreated.outerHTML)
+    const btnsOrder = orderDrinkDialog.querySelectorAll('.order')
+    for(let i = 0; i<elems.length-1;i++){
+        console.log(elems[i])
+    }
+
+        btnsOrder.forEach(btnOrder =>{
+            btnOrder.addEventListener('click', (e) => {
+                // console.log(e.target)
+                console.log(coffeeMachine.ingredients)
+                /*coffeeMachine.buyDrink(drink)
+                for (let i in drink) {
+                    const elemToUpdate = reserves.querySelector('.'+drink.name)
+                    elemToUpdate.innerText = i + ' : ' + coffeeMachine.ingredients[i]
+                }
+                console.log(coffeeMachine.ingredients)*/
+            })
+        })
+
+
+
+    openModalBtn.addEventListener("click", () => serviceDialog.showModal())
+    openMenuBtn.addEventListener("click", () => orderDrinkDialog.showModal())
+    closeModalBtn.addEventListener("click", () => serviceDialog.close())
+    closeMenuBtn.addEventListener("click", () => orderDrinkDialog.close())
+    passwordInput.addEventListener('input', (e) => {
+        takeMoneyBtn.disabled = e.target.value !== password.toString();
+    })
+    console.log(elems)
+    const orderBtns = document.querySelectorAll('.order')
+
+
+
+</script>
+</body>
+</html>
